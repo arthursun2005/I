@@ -18,6 +18,7 @@
 	};
 	Math.eps = 1e-16;
 	Math.TAU = Math.PI*2;
+	Math.roundTo = function(n,t){if(t == undefined){t = 3;}var g = Math.pow(10, t);return Math.round(n*g)/g;};
 	function Color(a,b,c,d){this.data = {};this.set(a,b,c,d);return this;}
 	Color.prototype = {
 		get: function(a){return this._set(a.r,a.g,a.b,a.a);}, 
