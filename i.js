@@ -156,8 +156,7 @@
 		addParticle: function(a,b,c,d,e){if(!(a instanceof Particle)){a = new Particle(a,b,c,d,e);}this.ps.push(a);},
 		update: function(){for (var i = this.ps.length - 1; i >= 0; i--) {this.ps[i].update();}},
 	};
-	Array.prototype.clone = function(){var a = []; for (var i = this.length - 1; i >= 0; i--) {if(this[i].clone != undefined){a[i] = this[i].clone();} else a[i] = this[i]; }return a;};
+	if(!Array.prototype.clone) Array.prototype.clone = function(){var a = []; for (var i = this.length - 1; i >= 0; i--) {if(this[i].clone != undefined){a[i] = this[i].clone();} else a[i] = this[i]; }return a;};
 	var globals = ("Array Clock Parent Obj Joint Mesh2 ParticleSystem dist Math change constrain Vec2 Shape2 Contact Color randFloat Arc").split(" ");
 	for (var i = globals.length - 1; i >= 0; i--) {global.I[globals[i]] = eval(globals[i]);}
-	global.bringI = function(){for(var k in I){global[k] = I[k];}return I;};
 })(this);
