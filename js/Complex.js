@@ -14,6 +14,8 @@
 		setRect: function(a,b){this.re = a || 0, this.im = b || 0;},
 		setString: function(str){this.get(Complex.eval(str));},
 		setPolar: function(a,r){this.get(Complex.polar(a,r));},
+		sqrt: function(){return this.pow(1/2);},
+		cbrt: function(){return this.pow(1/3);},
 		toString: function(o){var s="";if(this.re!=0){if(Math.abs(this.re)!=1){s+=Math.roundTo(this.re,o);}}if(this.im!=0){var i=Math.abs(this.im);if(this.im<0){s+='-';}else{if(this.re!=0){s+='+'}}if(i!=1){s+=Math.roundTo(i,o);}s+='i';}return s;},
 		clone: function(){var c = nC(this);c.data = this.data;return c;},
 		get: function(c){this.re = c.re, this.im = c.im;this.data = c.data;return this;},
@@ -47,6 +49,7 @@
 	Complex.eval = function(str){
 		if(str == undefined){return nC();}
 		if(typeof str == 'number'){return nC(str);}
+		str = str.toLowerCase();
 		var order = ['^','*','/','+','-'];
 		function check(s,_i){var a = arguments; for(var i=2;i<a.length;i++){for(var k in a[i]){var t = true; for(var j=0;j<k.length;j++){if(k[j] != s[_i+j]){t=false;break;} } if(t) return k; } } return false; }
 		function decompose(str){var a = [""], on = 0; function newa(){if(a[on] != ""){on++;a.push("");}}for(var i=0;i<str.length;i++){var _a = check(str, i, Complex.operators, Complex.prototype); if(str[i] == '(' || str[i] == ')' || _a){newa(); if(str[i] == '(' || str[i] == ')'){a[on]+=(str[i]); }else{a[on]+=_a; i+=_a.length-1; } newa(); }else{a[on]+=(str[i]); } } return a;}
@@ -111,6 +114,8 @@
 		}
 		return pSolve(a);
 	};
+	Object.assign(global, Complex.consts);
+	Object.assign(I, Complex.consts);
 	global.Complex = Complex;global.nC = nC;
 	if(global.I){global.I.Complex = Complex;}
 })(this);

@@ -1,5 +1,5 @@
 (function(global){
-	global.I = {};
+	global.I = global.I || {};
 	function change(n,a,b){var n1 = parseFloat(n,a);return n1.toString(b);}
 	function randFloat(a,b){return Math.random() * (b-a) + a;}
 	function constrain(a,b,c){if(a>c){return c}if(a<b){return b}return c};
@@ -14,10 +14,11 @@
 	Parent.prototype = {
 		add: function(){},
 		delete: function(){},
-		draw: function(){}
+		draw: function(){},
+		solve: function(){}
 	};
-	Math.eps = 1e-16;
-	Math.TAU = Math.PI*2;
+	I.eps = Math.eps = 1e-16;
+	I.TAU = Math.TAU = Math.PI*2;
 	Math.roundTo = function(n,t){if(t == undefined){t = 3;}var g = Math.pow(10, t);return Math.round(n*g)/g;};
 	function Color(a,b,c,d){this.data = {};this.set(a,b,c,d);return this;}
 	Color.prototype = {
@@ -130,7 +131,7 @@
 	function Joint(obj1, obj2){this.type = "";}
 	Joint.prototype = {
 	};
-	function Obj(mesh){this.visible = true;this.mesh = mesh;}
+	function Obj(mesh){this.visible = true;this.mesh = mesh;this.surfaceFriction = 0.3;this.C = 1;}
 	Obj.prototype = {};
 	function Contact(obj1, obj2, soft){
 		this.data = {};
