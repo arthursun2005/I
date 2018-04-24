@@ -51,10 +51,12 @@
 		function check(s,_i){var a = arguments; for(var i=2;i<a.length;i++){for(var k in a[i]){var t = true; for(var j=0;j<k.length;j++){if(k[j] != s[_i+j]){t=false;break;} } if(t) return k; } } return false; }
 		function decompose(str){var a = [""], on = 0; function newa(){if(a[on] != ""){on++;a.push("");}}for(var i=0;i<str.length;i++){var _a = check(str, i, Complex.operators, Complex.prototype); if(str[i] == '(' || str[i] == ')' || _a){newa(); if(str[i] == '(' || str[i] == ')'){a[on]+=(str[i]); }else{a[on]+=_a; i+=_a.length-1; } newa(); }else{a[on]+=(str[i]); } } return a;}
 		var a = decompose(str);
+		function isSpaces(str){for(var i=0;i<str.length;i++){if(str[i] != ' '){return false;} } return true; }
 		function error(m){if(m == undefined){m = "Syntax Error";}throw new Error(m);}
-		function single(sr){if(sr instanceof Complex){return sr;}var m = nC(1), _t = "";for(var i=0;i<sr.length;i++){var a01 = check(sr,i,Complex.consts);if(a01){m = m.mul(Complex.consts[a01]); i+=a01.length-1; }else{_t+=sr[i]; } }if(_t == "") _t = '1';return m.scl(eval(_t)); }
+		function single(sr){if(sr instanceof Complex){return sr;}var m = nC(1), _t = "";for(var i=0;i<sr.length;i++){var a01 = check(sr,i,Complex.consts);if(a01){m = m.mul(Complex.consts[a01]); i+=a01.length-1; }else{_t+=sr[i]; } }if(isSpaces(_t)){_t = '1';}return m.scl(eval(_t)); }
 		function pSolve(arr){
 			var ar = arr.clone();
+			function rh(r){return !(r in Complex.prototype) && !(r in Complex.operators);}
 			function lar(f){for (var _j = ar.length - 1; _j >= 0; _j--) {if(f){f(_j);}}}
 			lar(
 				function(i){
@@ -63,13 +65,50 @@
 					}
 				}
 			);
-			function tt(ind){lar(function(i){if(ar[i] == order[ind] && !(ar[i-1] in Complex.prototype) && !(ar[i+1] in Complex.prototype) && ar[i+1]) {if(i == 0){ar[i] = Complex.operators[ar[i]].apply(nC(), [single(ar[i+1])]); ar.splice(i+1, 1);}else{ar[i-1] = Complex.operators[ar[i]].apply(single(ar[i-1]), [single(ar[i+1])]); ar.splice(i, 2);}}});}
+			function tt(ind){lar(function(i){
+				if(ar[i] == order[ind] && rh(ar[i-1]) && rh(ar[i+1]) && ar[i+1]) {
+					if(i == 0){
+						ar[i] = Complex.operators[ar[i]].apply(nC(), [single(ar[i+1])]); ar.splice(i+1, 1);
+					}
+					else{
+						ar[i-1] = Complex.operators[ar[i]].apply(single(ar[i-1]), [single(ar[i+1])]); ar.splice(i, 2);
+					}
+				}});
+			}
 			tt(0);
-			lar(function(i){if(ar[i] in Complex.prototype && !(ar[i+1] in Complex.prototype) && ar[i+1]){ar[i] = Complex.prototype[ar[i]].apply(single(ar[i+1]));ar.splice(i+1, 1);}});
+			lar(function(i){
+				if(ar[i] in Complex.prototype){
+					if(rh(ar[i+1]) && ar[i+1]){ar[i] = Complex.prototype[ar[i]].apply(single(ar[i+1]));ar.splice(i+1, 1);}
+					else if(ar[i+1] in Complex.operators){var t = Complex.prototype[ar[i]].apply(single(ar[i+3]));t = Complex.operators[ar[i+1]].apply(t, [single(ar[i+2])]);ar[i] = t;ar.splice(i+1, 3);}
+				}
+			});
+			lar(function(i){
+				if(ar[i] && ar[i+1] && rh(ar[i]) && rh(ar[i+1])){
+					ar[i] = single(ar[i]).mul(single(ar[i+1]));
+					ar.splice(i+1, 1);
+				}
+			});
 			tt(1);tt(2);tt(3);tt(4);
 			return ar[0];
 		}
 		function getCount(){var ca = 0, cb = 0; for (var i = a.length - 1; i >= 0; i--) {if(a[i] == '('){ca++;} if(a[i] == ')'){cb++;} } return [ca, cb]; }
+		var t = getCount();
+		if(t[1]>t[0]){error();return;}
+		for (var i = a.length - 1; i >= 0; i--) {
+			if(a[i] != '('){continue;}
+			for(var j=i+1;j<a.length;j++){
+				if(a[j] == '('){break;}
+				if(a[j] == ')' || j == a.length-1){
+					if(j == a.length-1){a.push(')');j++;}
+					var acl = a.clone();
+					var t = acl.splice(i+1, j-i-1);
+					var ans = pSolve(t);
+					a.splice(i+1, j-i);
+					a[i] = ans;
+					break;
+				}
+			}
+		}
 		return pSolve(a);
 	};
 	global.Complex = Complex;global.nC = nC;
