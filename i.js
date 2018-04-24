@@ -19,7 +19,7 @@
 	};
 	I.eps = Math.eps = 1e-16;
 	I.TAU = Math.TAU = Math.PI*2;
-	Math.roundTo = function(n,t){if(t == undefined){t = 3;}var g = Math.pow(10, t);return Math.round(n*g)/g;};
+	if(Math.roundTo == undefined) Math.roundTo = function(n,t){if(t == undefined){t = 3;}var g = Math.pow(10, t);return Math.round(n*g)/g;};
 	function Color(a,b,c,d){this.data = {};this.set(a,b,c,d);return this;}
 	Color.prototype = {
 		get: function(a){return this._set(a.r,a.g,a.b,a.a);}, 
@@ -38,7 +38,8 @@
 		sub: function(a,b,c,d){var _c = new Color(a,b,c,d); this.r-=_c.r; this.g-=_c.g; this.b-=_c.b; this.a-=_c.a; this._c(); return this; }, 
 		scale: function(scl){this.r*=scl; this.g*=scl; this.b*=scl; this.a*=scl; this._c(); return this; }, mix: function(b, u){var _this = this.clone(); this.lerp(b, u); b.lerp(_this, u);}
 	};
-	function Vec2(x, y){this.data = {};return this.set(x,y);}
+	function Vec2(x,y){this.data = {};return this.set(x,y);}
+	function nV(x,y){return new Vec2(x,y);}
 	Object.assign(Vec2, {
 		polar: function(a,r){return new Vec2(Math.cos(a)*r, Math.sin(a)*r);},
 		mix: function(a,b,u){var c = a.clone();a.lerp(b,u);b.lerp(c,u);}
@@ -54,6 +55,7 @@
 		dot: function(a,b){if(a == undefined){a = this.clone();}else if(!(a instanceof Vec2)){a = new Vec2(a, b);}return this.x*a.x + this.y*a.y;},
 		cross: function(a,b){if(a == undefined){a = this.clone();}else if(!(a instanceof Vec2)){a = new Vec2(a, b);}return this.x*a.y - this.y*a.x;},
 		mag: function(){return Math.sqrt(this.x*this.x + this.y*this.y)},
+		round: function(t){this.x = Math.roundTo(this.x, t); this.y = Math.roundTo(this.y, t); },
 		angle: function(){var a = Math.atan2(this.y, this.x);return a<0 ? a+Math.TAU : a;},
 		onAxis: function(a){return Vec2.polar(angle-this.angle(), this.mag());},
 		rotate: function(a){this.get(Vec2.polar(this.angle()+a, this.mag())); return this;},
@@ -122,7 +124,9 @@
 	}
 	Mesh2.prototype = {
 		get: function(mesh){this.data = mesh.data;this.visible = mesh.visible;this.rot = mesh.rot;this.scl = mesh.scl;this.p = mesh.p.clone();this.shapes = mesh.shapes.clone();this.joints = mesh.joints.clone();this.arcs = mesh.arcs.clone();return this;},
-		add: function(){},
+		add: function(a,b){
+			this.p.add(a,b);
+		},
 		sub: function(){},
 		rotate: function(){},
 		rotateAround: function(){},
@@ -158,6 +162,6 @@
 		update: function(){for (var i = this.ps.length - 1; i >= 0; i--) {this.ps[i].update();}},
 	};
 	if(!Array.prototype.clone) Array.prototype.clone = function(){var a = []; for (var i = this.length - 1; i >= 0; i--) {if(this[i].clone != undefined){a[i] = this[i].clone();} else a[i] = this[i]; }return a;};
-	var globals = ("Array Clock Parent Obj Joint Mesh2 ParticleSystem dist Math change constrain Vec2 Shape2 Contact Color randFloat Arc").split(" ");
+	var globals = ("nV Array Clock Parent Obj Joint Mesh2 ParticleSystem dist Math change constrain Vec2 Shape2 Contact Color randFloat Arc").split(" ");
 	for (var i = globals.length - 1; i >= 0; i--) {global.I[globals[i]] = eval(globals[i]);}
 })(this);
