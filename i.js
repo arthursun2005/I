@@ -17,8 +17,8 @@
 		draw: function(){},
 		solve: function(){}
 	};
-	I.eps = Math.eps = 1e-16;
-	I.TAU = Math.TAU = Math.PI*2;
+	Math.eps = 1e-16;
+	Math.TAU = Math.PI*2;
 	if(Math.roundTo == undefined) Math.roundTo = function(n,t){if(t == undefined){t = 3;}var g = Math.pow(10, t);return Math.round(n*g)/g;};
 	function Color(a,b,c,d){this.data = {};this.set(a,b,c,d);return this;}
 	Color.prototype = {
@@ -41,21 +41,21 @@
 	function Vec2(x,y){this.data = {};return this.set(x,y);}
 	function nV(x,y){return new Vec2(x,y);}
 	Object.assign(Vec2, {
-		polar: function(a,r){return new Vec2(Math.cos(a)*r, Math.sin(a)*r);},
+		polar: function(a,r){return nV(Math.cos(a)*r, Math.sin(a)*r);},
 		mix: function(a,b,u){var c = a.clone();a.lerp(b,u);b.lerp(c,u);}
 	});
 	Vec2.prototype = {
 		set: function(x, y){if(x == undefined){this.x = 0, this.y = 0;} else if(y == undefined){if(x instanceof Vec2){this.get(x);}else if(typeof x == 'number'){this.get(x);}} else{this.x = x, this.y = y;} return this;},
 		get: function(p){this.data = p.data;this.x = p.x, this.y = p.y; return this;},
-		mul: function(a,b){if(!(a instanceof Vec2)){a = new Vec2(a, b);}return new Vec2(this.dot(a), this.x*a.y + this.y*a.x);},
-		scl: function(scl){return new Vec2(this.x*scl, this.y*scl);},
-		clone: function(){var p = new this.constructor(this);p.data = this.data;return p;},
-		add: function(a,b){if(!(a instanceof Vec2)){a = new Vec2(a, b);}this.x += a.x, this.y += a.y;return this;},
-		sub: function(a,b){if(!(a instanceof Vec2)){a = new Vec2(a, b);}this.x -= a.x, this.y -= a.y;return this;},
-		dot: function(a,b){if(a == undefined){a = this.clone();}else if(!(a instanceof Vec2)){a = new Vec2(a, b);}return this.x*a.x + this.y*a.y;},
-		cross: function(a,b){if(a == undefined){a = this.clone();}else if(!(a instanceof Vec2)){a = new Vec2(a, b);}return this.x*a.y - this.y*a.x;},
+		mul: function(a,b){a = nV(a,b);return nV(this.dot(a), this.x*a.y + this.y*a.x);},
+		scl: function(scl){return nV(this.x*scl, this.y*scl);},
+		clone: function(){var p = nV(this);p.data = this.data;return p;},
+		add: function(a,b){a = nV(a,b);this.x += a.x, this.y += a.y;return this;},
+		sub: function(a,b){a = nV(a,b);this.x -= a.x, this.y -= a.y;return this;},
+		dot: function(a,b){if(a == undefined){a = this.clone();}else if(!(a instanceof Vec2)){a = nV(a, b);}return this.x*a.x + this.y*a.y;},
+		cross: function(a,b){if(a == undefined){a = this.clone();}else if(!(a instanceof Vec2)){a = nV(a, b);}return this.x*a.y - this.y*a.x;},
 		mag: function(){return Math.sqrt(this.x*this.x + this.y*this.y)},
-		round: function(t){this.x = Math.roundTo(this.x, t); this.y = Math.roundTo(this.y, t); },
+		round: function(t){this.x = Math.roundTo(this.x, t); this.y = Math.roundTo(this.y, t);return this;},
 		angle: function(){var a = Math.atan2(this.y, this.x);return a<0 ? a+Math.TAU : a;},
 		onAxis: function(a){return Vec2.polar(angle-this.angle(), this.mag());},
 		rotate: function(a){this.get(Vec2.polar(this.angle()+a, this.mag())); return this;},
@@ -63,9 +63,9 @@
 		norm: function(){var m = this.mag();return new Vec2(this.x/m, this.y/m);},
 		equals: function(v){return Math.abs(this.x-v.x)<Math.eps &&  Math.abs(this.y-v.y)<Math.eps},
 		neg: function(){return new Vec2(-this.x, -this.y);},
-		mid: function(a,b){if(!(a instanceof Vec2)){a = new Vec2(a, b);}return new Vec2(this.x/2+a.x/2, this.y/2+a.y/2);},
+		mid: function(a,b){a = nV(a,b);return nV(this.x/2+a.x/2, this.y/2+a.y/2);},
 		lerp: function(a,u){this.x+=(a.x-this.x)*u;this.y+=(a.y-this.y)*u;return this;},
-		toString: function(){return "("+this.x+", "+this.y+")";}
+		toString: function(t){var v = this.clone();v.round(t);return "("+v.x+", "+v.y+")";}
 	};
 	function Clock(auto){if(auto == undefined){auto = true;}this.waits = [];this.laps=[];this.time=Date.now();this.delta=0;this.last=this.time;this.start=this.time;this.running=auto;return this;}
 	Clock.prototype = {
@@ -120,7 +120,7 @@
 		equals: function(s){if(this.ps.length != s.ps.length || !this.ps[0].equals(s.ps[0])){return false;}for (var i = this.ps.length - 1; i >= 0; i--) {if(!this.ps[i].equals(s.ps[i])){return false;}}return true;}
 	};
 	function Mesh2(){
-		this.data = {};this.visible = true;this.rot = 0;this.scl = 0;this.p = 0;this.shapes = [];this.joints = [];this.arcs = [];return this;
+		this.data = {};this.visible = true;this.rot = 0;this.scl = 0;this.p = 0;this.shapes = [];this.joints = [];this.arcs = [];this.color = new Color();return this;
 	}
 	Mesh2.prototype = {
 		get: function(mesh){this.data = mesh.data;this.visible = mesh.visible;this.rot = mesh.rot;this.scl = mesh.scl;this.p = mesh.p.clone();this.shapes = mesh.shapes.clone();this.joints = mesh.joints.clone();this.arcs = mesh.arcs.clone();return this;},
@@ -148,7 +148,7 @@
 		clone: function(){},
 		solve: function(){}
 	};
-	function Particle(x,y,r,d,c){this.p = new Vec2(x,y);this.v = new Vec2(); this.c = c || new Color(0,255,0); this.r = r || 3; this.density =  d || 1; this.w = 0; this.s = new Vec2(); this.visible = true;return this;}
+	function Particle(x,y,r,d,c){this.p = new Vec2(x,y);this.v = new Vec2(); this.color = c || new Color(0,255,0); this.r = r || 3; this.density =  d || 1; this.w = 0; this.s = new Vec2(); this.visible = true;return this;}
 	Particle.prototype = {
 		getMass: function(){return Math.PI*this.density*this.r*this.r;},
 		update: function(){this.p.add(this.v);}
