@@ -34,7 +34,7 @@
 		rotate: function(a){var m = this.mag(), b = this.angle();this.get(Complex.polar(b+a, m));},
 		mag: function(){return Math.sqrt(this.re*this.re+this.im*this.im);},
 		angle: function(){return Math.atan2(this.im, this.re);},
-		pow: function(a,b){a = nC(a,b);return a.mul(this.ln()).exp();},
+		pow: function(a,b){a = nC(a,b);return (a.mul(this.ln())).exp();},
 		neg: function(){return nC(-this.re, -this.im);},
 		conj: function(){return nC(this.re, -this.im);},
 		round: function(t){this.re = Math.roundTo(this.re, t); this.im = Math.roundTo(this.im, t); },
@@ -60,8 +60,7 @@
 		conj: function(v,a){v = nC(v,a);return v.conj();},
 		rotate: function(v,a){_v = v.clone();return _v.rotate(a);},
 		polar: function(a,r){if(a == undefined){a = 0;}if(r == undefined){r = 1;}return nC(Math.cos(a)*r, Math.sin(a)*r);},
-		pow: function(){var a = arguments, r = a[0]; for(var i=1;i<a.length;i++){r = r.pow(a[i]); } return r; },
-		pow2: function(){var a = arguments, r = a[a.length-2]; for(var i=1;i<a.length;i++){r = r.pow(a[i]); } return r;}
+		pow: function(){var a = arguments, r = a[a.length-1];for(var i=a.length-2;i>=0;i--){r = a[i].pow(r); } return r;},
 	});
 	Complex.prototype.abs = Complex.prototype.mag;
 	Complex.operators = {'^': Complex.prototype.pow, '*': Complex.prototype.mul, '/': Complex.prototype.div, '-': Complex.prototype.sub, '+': Complex.prototype.add};
@@ -76,7 +75,7 @@
 		var a = decompose(str);
 		function isSpaces(str){for(var i=0;i<str.length;i++){if(str[i] != ' '){return false;} } return true; }
 		function error(m){if(m == undefined){m = "Syntax Error";}throw new Error(m);}
-		function single(sr){if(sr instanceof Complex){return sr;}var m = nC(1), _t = "";for(var i=0;i<sr.length;i++){var a01 = check(sr,i,Complex.consts);if(a01){m = m.mul(Complex.consts[a01]); i+=a01.length-1; }else{_t+=sr[i]; } }if(isSpaces(_t)){_t = '1';}return m.scl(eval(_t)); }
+		function single(sr){if(sr instanceof Complex){return sr;}var m = nC(1), _t = "";for(var i=0;i<sr.length;i++){var a01 = check(sr,i,Complex.consts);if(a01){m = m.mul(Complex.consts[a01]); i+=a01.length-1; }else{_t+=sr[i]; } }if(isSpaces(_t)){_t = '1';}else if(_t[0] == '.'){_t+='0';}return m.scl(eval(_t)); }
 		function pSolve(arr){
 			var ar = arr.clone();
 			function rh(r){return !(r in Complex) && !(r in Complex.operators) && r != ','}
