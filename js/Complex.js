@@ -1,5 +1,5 @@
 (function(global){
-	function Complex(a,b){this.data = {};this.set(a,b);return this;}
+	function Complex(a,b){this.set(a,b);return this;}
 	function nC(a,b){return new Complex(a,b);}
 	if(!global.Array.prototype.clone) global.Array.prototype.clone = function(){var a = []; for (var i = this.length - 1; i >= 0; i--) {if(this[i].clone != undefined){a[i] = this[i].clone();} else a[i] = this[i]; }return a;};
 	Complex.eps = Math.eps || 1e-16;
@@ -12,8 +12,8 @@
 		sqrt: function(){return this.pow(1/2);},
 		cbrt: function(){return this.pow(1/3);},
 		toString: function(o){var s="";if(this.re!=0){if(Math.abs(this.re)!=1){s+=Math.roundTo(this.re,o);}}if(this.im!=0){var i=Math.abs(this.im);if(this.im<0){s+='-';}else{if(this.re!=0){s+='+'}}if(i!=1){s+=Math.roundTo(i,o);}s+='i';}return s;},
-		clone: function(){var c = nC(this);c.data = this.data;return c;},
-		get: function(c){this.re = c.re, this.im = c.im;this.data = c.data;return this;},
+		clone: function(){var t = nC();for(var k in this){if(this.hasOwnProperty(k)){if(this[k].clone) t[k] = this[k].clone();else t[k] = this[k];}}return t;},
+		get: function(c){for(var k in c){if(c.hasOwnProperty(k)){if(c[k].clone) this[k] = c[k].clone();else this[k] = c[k];}}return this;},
 		sin: function(){return (this.mul('i').exp().sub(this.mul('-i').exp())).div('2i');},
 		asin: function(){return this.sin().inv();},
 		cos: function(){return (this.mul('i').exp().add(this.mul('-i').exp())).div('2');},
@@ -71,7 +71,7 @@
 		str = str.toLowerCase();
 		var order = ['^','*','/','+','-'];
 		function check(s,_i){var a = arguments; for(var i=2;i<a.length;i++){for(var k in a[i]){var t = true; for(var j=0;j<k.length;j++){if(k[j] != s[_i+j]){t=false;break;} } if(t) return k; } } return false; }
-		function decompose(str){var a = [""], on = 0; function newa(){if(a[on] != "") on++;a.push("");}for(var i=0;i<str.length;i++){var _a = check(str, i, Complex.operators, Complex.prototype); if(str[i] == ',' || str[i] == '(' || str[i] == ')' || _a){newa(); if(str[i] == ',' || str[i] == '(' || str[i] == ')'){if(str[i] == '(' && str[i-1] == ' '){error();return [0];}a[on]+=(str[i]);}else{a[on]+=_a; i+=_a.length-1; } newa(); }else{a[on]+=(str[i]); } } return a;}
+		function decompose(str){var a = [""], on = 0; function newa(){if(!isSpaces(a[on])){on++;a.push("");}else{a[on] = "";}}for(var i=0;i<str.length;i++){var _a = check(str, i, Complex.operators, Complex.prototype); if(str[i] == ',' || str[i] == '(' || str[i] == ')' || _a){newa(); if(str[i] == ',' || str[i] == '(' || str[i] == ')'){a[on]+=(str[i]);}else{a[on]+=_a; i+=_a.length-1; } newa(); }else{a[on]+=(str[i]); } } return a;}
 		var a = decompose(str);
 		function isSpaces(str){for(var i=0;i<str.length;i++){if(str[i] != ' '){return false;} } return true; }
 		function error(m){if(m == undefined){m = "Syntax Error";}throw new Error(m);}
@@ -87,6 +87,24 @@
 					}
 				}
 			);
+			function tt(ind){lar(function(i){
+				if(ar[i] == order[ind] && rh(ar[i-1]) && rh(ar[i+1]) && ar[i+1]) {
+					if(i == 0){
+						ar[i] = Complex.operators[ar[i]].apply(nC(), [(ar[i+1])]); ar.splice(i+1, 1);
+					}
+					else{
+						ar[i-1] = Complex.operators[ar[i]].apply((ar[i-1]), [(ar[i+1])]); ar.splice(i, 2);
+					}
+				}});
+			}
+			tt(0);
+			lar(function(i){
+				if(ar[i] && ar[i+1] && rh(ar[i]) && rh(ar[i+1])){
+					ar[i] = (ar[i]).mul((ar[i+1]));
+					ar.splice(i+1, 1);
+				}
+			});
+			tt(1);tt(2);tt(3);tt(4);
 			lar(
 				function(i){
 					if(ar[i] == ','){
@@ -99,17 +117,6 @@
 					}
 				}
 			);
-			function tt(ind){lar(function(i){
-				if(ar[i] == order[ind] && rh(ar[i-1]) && rh(ar[i+1]) && ar[i+1]) {
-					if(i == 0){
-						ar[i] = Complex.operators[ar[i]].apply(nC(), [(ar[i+1])]); ar.splice(i+1, 1);
-					}
-					else{
-						ar[i-1] = Complex.operators[ar[i]].apply((ar[i-1]), [(ar[i+1])]); ar.splice(i, 2);
-					}
-				}});
-			}
-			tt(0);
 			lar(function(i){
 				if(ar[i] in Complex){
 					if(ar[i+1] in Complex.operators){
@@ -125,13 +132,6 @@
 					}
 				}
 			});
-			lar(function(i){
-				if(ar[i] && ar[i+1] && rh(ar[i]) && rh(ar[i+1])){
-					ar[i] = (ar[i]).mul((ar[i+1]));
-					ar.splice(i+1, 1);
-				}
-			});
-			tt(1);tt(2);tt(3);tt(4);
 			return ar[0];
 		}
 		function getCount(){var ca = 0, cb = 0; for (var i = a.length - 1; i >= 0; i--) {if(a[i] == '('){ca++;} if(a[i] == ')'){cb++;} } return [ca, cb]; }
@@ -154,5 +154,5 @@
 		}
 		return pSolve(a);
 	};
-	global.I = global.I || {};global.I.Complex = global.Complex = Complex;global.nC = nC;
+	global.I = global.I || {};global.I.Complex = Complex;global.I.nC = nC;
 })(this);
