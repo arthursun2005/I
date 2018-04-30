@@ -1,7 +1,9 @@
 (function(global){
 	function Complex(a,b){this.set(a,b);return this;}
 	function nC(a,b){return new Complex(a,b);}
-	if(!global.Array.prototype.clone) global.Array.prototype.clone = function(){var a = []; for (var i = this.length - 1; i >= 0; i--) {if(this[i].clone != undefined){a[i] = this[i].clone();} else a[i] = this[i]; }return a;};
+	if(!global.Object.prototype.clone) global.Object.prototype.clone = function(){var o = new this.constructor(); for(var k in this){if(this.hasOwnProperty(k)){if(typeof k == 'object') o[k] = this[k].clone(); else o[k] = this[k]; } } return o; };
+	if(!global.Object.prototype.get) global.Object.prototype.get = function(o){for(var k in o){if(o.hasOwnProperty(k)){if(typeof k == 'object') this[k] = o[k].clone(); else this[k] = o[k]; } } return this; };
+	if(!global.Array.prototype.clone) global.Array.prototype.clone = function(){var a = []; for (var i = this.length - 1; i >= 0; i--) {if(typeof this[i] == 'object') a[i] = this[i].clone(); else a[i] = this[i]; } return a; };
 	Complex.eps = Math.eps || 1e-16;
 	if(global.Math.roundTo == undefined){global.Math.roundTo = function(n,t){if(t == undefined){t = 3;}var g = Math.pow(10, t);return Math.round(n*g)/g;};}
 	Complex.prototype = {
@@ -12,18 +14,17 @@
 		sqrt: function(){return this.pow(1/2);},
 		cbrt: function(){return this.pow(1/3);},
 		toString: function(o){var s="";if(this.re!=0){if(Math.abs(this.re)!=1){s+=Math.roundTo(this.re,o);}}if(this.im!=0){var i=Math.abs(this.im);if(this.im<0){s+='-';}else{if(this.re!=0){s+='+'}}if(i!=1){s+=Math.roundTo(i,o);}s+='i';}return s;},
-		clone: function(){var t = nC();for(var k in this){if(this.hasOwnProperty(k)){if(this[k].clone) t[k] = this[k].clone();else t[k] = this[k];}}return t;},
-		get: function(c){for(var k in c){if(c.hasOwnProperty(k)){if(c[k].clone) this[k] = c[k].clone();else this[k] = c[k];}}return this;},
 		sin: function(){return (this.mul('i').exp().sub(this.mul('-i').exp())).div('2i');},
 		asin: function(){return this.sin().inv();},
 		cos: function(){return (this.mul('i').exp().add(this.mul('-i').exp())).div('2');},
 		acos: function(){return this.cos().inv();},
+		// wrong!
 		tan: function(){return this.sin().div(this.cos());},
 		atan: function(){return this.tan().inv();},
 		sinh: function(){return (this.mul('i').exp().sub(this.mul('-i').exp())).div('2');},
 		cosh: function(){return (this.mul('i').exp().add(this.mul('-i').exp())).div('2');},
 		tanh: function(){return this.sinh().div(this.cosh());},
-		exp: function(){var v1 = nC(Math.exp(this.re));var v2 = nC();v2.setPolar(this.im);return v1.mul(v2);},
+		exp: function(){var v1 = nC(Math.exp(this.re));var v2 = Complex.polar(this.im);return v1.mul(v2);},
 		ln: function(){return nC(Math.log(this.mag()), this.angle());},
 		add: function(a,b){a = nC(a,b);this.re+=a.re, this.im+=a.im;return this;},
 		sub: function(a,b){a = nC(a,b);this.re-=a.re, this.im-=a.im;return this;},

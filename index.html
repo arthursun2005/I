@@ -12,10 +12,12 @@
 	<script src="i.js" type="text/javascript"></script>
 	<script src="js/Complex.js" type="text/javascript"></script>
 	<script type="text/javascript">
+		Object.assign(window, I);
 		var c1 = document.getElementById("canvas1");
 		const ww = window.innerWidth, hh = window.innerHeight;
 		c1.width = ww, c1.height = hh;
 		c1.style = "border: 1.5px solid #0000ff";
+		var p = new Parent();
 	</script>
 </body>
 </html>

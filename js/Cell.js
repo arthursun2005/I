@@ -1,5 +1,14 @@
 (function(global){
-	function DNA(){}
+	function DNA(){
+		var t = {
+		};
+	}
 	function Cell(){}
-	function Virus(){}
+	Object.assign(Cell.prototype, {
+	});
+	function Virus(){
+		Cell.call(this);
+	}
+	Virus.prototype = Object.create(Cell.prototype);
+	Virus.prototype.constructor = Virus;
 })(this);
