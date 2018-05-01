@@ -1,4 +1,5 @@
-(function(global){
+(function I(global){
+	"use strict";
 	var I = I || {};
 	function change(n,a,b){var n1 = parseFloat(n,a);return n1.toString(b);}
 	function randFloat(a,b){return Math.random() * (b-a) + a;}
@@ -12,13 +13,13 @@
 	function genId(){if(this == global)return "global";Object._id++;this.constructor._id++;this._id = this.constructor.name+"-"+change(this.constructor._id,10,16)+"-"+change(Object._id,10,16)+"-"+change(Date.now(),10,16);}
 	function Parent(canvas){
 		genId.apply(this);
-		this.children = [];
+		this.keys = {};
 		this.clock = new Clock();
 		this.canvas = canvas;
 	}
 	Object.assign(Parent.prototype, {
-		add: function(obj){},
-		delete: function(obj){},
+		add: function(obj){this.keys[obj._id] = obj;},
+		remove: function(obj){delete this.keys[obj._id];},
 		draw: function(){},
 		solve: function(){}
 	});
@@ -60,8 +61,8 @@
 		angle: function(){var a = Math.atan2(this.y, this.x);return a<0 ? a+Math.TAU : a;},
 		onAxis: function(a){return Vec2.polar(angle-this.angle(), this.mag());},
 		rotate: function(a){this.get(Vec2.polar(this.angle()+a, this.mag())); return this;},
-		rotateAround(a,p){if(p == undefined){p = new Vec2();}this.sub(p);this.rotate(a);this.add(p);return this;},
-		norm: function(){var m = this.mag();return new Vec2(this.x/m, this.y/m);},
+		rotateAround(a,p){if(p == undefined){p = nV();}this.sub(p);this.rotate(a);this.add(p);return this;},
+		norm: function(){var m = this.mag();return nV(this.x/m, this.y/m);},
 		equals: function(v){return Math.abs(this.x-v.x)<Math.eps &&  Math.abs(this.y-v.y)<Math.eps},
 		neg: function(){return new Vec2(-this.x, -this.y);},
 		mid: function(a,b){a = nV(a,b);return nV(this.x/2+a.x/2, this.y/2+a.y/2);},
@@ -80,7 +81,7 @@
 		is: function(name){var t = this.getTime();if(t-this.waits[name].last>=this.waits[name].time){this.waits[name].last = t;return true;}else return false;},
 		delete: function(name){this.waits[name] = undefined;},
 	});
-	function Arc(x,y,r,a1,a2){genId.apply(this);this.visible = false;this.type = "arc";this.set(x,y,r,a1,a2);return this;}
+	function Arc(x,y,r,a1,a2){genId.apply(this);this.visible = false;this.type = "segment";this.set(x,y,r,a1,a2);return this;}
 	Object.assign(Arc, {
 		circle: function(p,r){return new Arc(p.x,p.y,r);}
 	});
@@ -104,8 +105,8 @@
 	Object.assign(Shape2.prototype, {
 		getArea: function(){if(!this.closed()){console.warn("An open shape has been asked to compute for area, use getParameter() instead");return this.getParameter();}var a = 0;for(var i=0;i<this.ps.length-1;i++){a+=this.ps[i].x*this.ps[i+1].y-this.ps[i].y*this.ps[i+1].x; }return a/2;},
 		getParameter: function(){var a = 0;for(var i=0;i<this.ps.length-1;i++){a+=dist(this.ps[i], this.ps[i+1]);}return a;},
-		getAreaCenter: function(){var c = new Vec2(), a = this.getArea(); for(var i=0;i<this.ps.length-1;i++){c.x+=(this.ps[i].x+this.ps[i+1].x)*(this.ps[i].x*this.ps[i+1].y-this.ps[i].y*this.ps[i+1].x); c.y+=(this.ps[i].y+this.ps[i+1].y)*(this.ps[i].x*this.ps[i+1].y-this.ps[i].y*this.ps[i+1].x); } return c.scl(1/a/6); },
-		getParameterCenter: function(){var c = new Vec2(); for(var i=0;i<this.ps.length-1;i++){c.add((this.ps[i].mid(this.ps[i+1])).scl(dist(this.ps[i], this.ps[i+1]))); } return c.scl(1/this.getParameter()); },
+		getAreaCenter: function(){var c = nV(), a = this.getArea(); for(var i=0;i<this.ps.length-1;i++){c.x+=(this.ps[i].x+this.ps[i+1].x)*(this.ps[i].x*this.ps[i+1].y-this.ps[i].y*this.ps[i+1].x); c.y+=(this.ps[i].y+this.ps[i+1].y)*(this.ps[i].x*this.ps[i+1].y-this.ps[i].y*this.ps[i+1].x); } return c.scl(1/a/6); },
+		getParameterCenter: function(){var c = nV(); for(var i=0;i<this.ps.length-1;i++){c.add((this.ps[i].mid(this.ps[i+1])).scl(dist(this.ps[i], this.ps[i+1]))); } return c.scl(1/this.getParameter()); },
 		close: function(){if(!this.closed()){this.ps.push(this.ps[0].clone());}return this;},
 		closed: function(){return this.ps[this.ps.length-1].equals(this.ps[0]);},
 		rotate: function(a){for (var i = this.ps.length - 1; i >= 0; i--) {this.ps[i].rotate(a);}return this;},
@@ -121,16 +122,13 @@
 		this.visible = true;
 		this.rot = 0;
 		this.scl = 0;
-		this.p = 0;
+		this.p = nV();
 		this.shape = shape;
 		this.color = new Color();
 		return this;
 	}
 	Object.assign(Mesh2.prototype, {
-		add: function(a,b){},
-		sub: function(){},
-		rotate: function(){},
-		rotateAround: function(){},
+		in: function(){}
 	});
 	function Joint(obj1, obj2){
 		genId.apply(this);
@@ -147,12 +145,14 @@
 		this.mesh = mesh;
 		this.surfaceFriction = 0.3;
 		this.C = 1;
-		this.ints = [];
+		this.intKeys = {};
 		return this;
 	}
 	Object.assign(Obj.prototype, {
-		connect: function(){},
-		disConnect: function(){},
+		connect: function(o){this.intKeys[o._id] = o;o.intKeys[this._id] = this;},
+		disConnect: function(o){delete this.intKeys[o._id];delete o[this._id];},
+		applyImpulse: function(i,p){
+		}
 	});
 	function Contact(obj1, obj2){
 		genId.apply(this);
@@ -171,10 +171,22 @@
 	function ParticleParams(o){
 		genId.apply(this);
 		var t = {
-			viscousForce: 0.05,
+			viscousStrength: 0.05,
+			repelStrength: 1,
+			constScl: 1,
+			normalTensileStrength: 0,
+			surfaceTensileStrength: 0,
+			colorMixingStrength: 0,
+			powderForce: 0,
+			pressureStrength: 0.1,
+			elasticStrength: 0
 		};
-		if(o != undefined) for(var k in t){if(!t.hasOwnProperty(k)) continue; if(!o.hasOwnProperty(k)) o[k] = t[k]; }
-		this.get(o);
+		if(o == undefined){
+			this.get(t);
+		}else{
+			for(var k in t){if(!t.hasOwnProperty(k))continue; if(!o.hasOwnProperty(k)) o[k] = t[k]; }
+			this.get(o);
+		}
 		return this;
 	}
 	function Particle(x,y,r,d,c){
@@ -191,7 +203,9 @@
 	}
 	Object.assign(Particle.prototype, {
 		getMass: function(){return Math.PI*this.density*this.r*this.r;},
-		update: function(){this.p.add(this.v);}
+		update: function(){this.p.add(this.v);},
+		applyImpulse: function(i){
+		}
 	});
 	function ParticleGroup(){
 		genId.apply(this);
@@ -210,9 +224,13 @@
 	});
 	Object.prototype._id = 0;
 	Object.prototype.clone = function($id){var o = new this.constructor(); for(var k in this){if(this.hasOwnProperty(k) && (k != "_id" || $id)){if(typeof k == 'object') o[k] = this[k].clone(); else o[k] = this[k];}}if($id){this.constructor._id--;Object._id--;}return o;};
-	Object.prototype.get = function(o){for(var k in o){if(o.hasOwnProperty(k) && k != "_id"){if(typeof k == 'object') this[k] = o[k].clone(); else this[k] = o[k]; } } return this; };
+	function get(o){for(var k in o){if(o.hasOwnProperty(k) && k != "_id"){if(typeof k == 'object') this[k] = o[k].clone(); else this[k] = o[k]; } } return this; };
 	Array.prototype.clone = function(){var a = []; for (var i = this.length - 1; i >= 0; i--) {if(typeof this[i] == 'object') a[i] = this[i].clone(); else a[i] = this[i]; } return a;};
-	var globals = ("readId Object genId ParticleParams ParticleGroup Particle nV Array Clock Parent Obj Joint Mesh2 ParticleSystem dist Math change constrain Vec2 Shape2 Contact Color randFloat Arc").split(" ");
-	for (var i = globals.length - 1; i >= 0; i--) {I[globals[i]] = eval(globals[i]);}
+	var arr = ("readId genId ParticleParams ParticleGroup Particle nV Clock Parent Obj Joint Mesh2 ParticleSystem dist change constrain Vec2 Shape2 Contact Color randFloat Arc").split(" ");
+	for (var i = arr.length - 1; i >= 0; i--) {
+		var t = eval(arr[i]);
+		if(typeof t == 'function') t.prototype.get = get;
+		Object.defineProperty(I, arr[i], {value: t, enumerable: true }); 
+	}
 	global.I = I;
 })(this);

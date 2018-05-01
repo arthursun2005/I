@@ -2,25 +2,25 @@
 	function Complex(a,b){this.set(a,b);return this;}
 	function nC(a,b){return new Complex(a,b);}
 	if(!global.Object.prototype.clone) global.Object.prototype.clone = function(){var o = new this.constructor(); for(var k in this){if(this.hasOwnProperty(k)){if(typeof k == 'object') o[k] = this[k].clone(); else o[k] = this[k]; } } return o; };
-	if(!global.Object.prototype.get) global.Object.prototype.get = function(o){for(var k in o){if(o.hasOwnProperty(k)){if(typeof k == 'object') this[k] = o[k].clone(); else this[k] = o[k]; } } return this; };
 	if(!global.Array.prototype.clone) global.Array.prototype.clone = function(){var a = []; for (var i = this.length - 1; i >= 0; i--) {if(typeof this[i] == 'object') a[i] = this[i].clone(); else a[i] = this[i]; } return a; };
 	Complex.eps = Math.eps || 1e-16;
 	if(global.Math.roundTo == undefined){global.Math.roundTo = function(n,t){if(t == undefined){t = 3;}var g = Math.pow(10, t);return Math.round(n*g)/g;};}
-	Complex.prototype = {
+	Complex.prototype.get = function(o){for(var k in o){if(o.hasOwnProperty(k) && k != "_id"){if(typeof k == 'object') this[k] = o[k].clone(); else this[k] = o[k]; } } return this; };
+	Object.assign(Complex.prototype, {
 		set: function(a,b){if(a == undefined){this.re = 0, this.im = 0;return this;}else if(b == undefined){if(a instanceof Complex){this.get(a);}else if(typeof a == 'number'){this.setRect(a);} else if(typeof a == 'string'){this.setString(a);} } else{this.setRect(a,b); }},
 		setRect: function(a,b){this.re = a || 0, this.im = b || 0;},
 		setString: function(str){this.get(Complex.eval(str));},
 		setPolar: function(a,r){this.get(Complex.polar(a,r));},
 		sqrt: function(){return this.pow(1/2);},
+		sq: function(){return this.pow(2);},
 		cbrt: function(){return this.pow(1/3);},
 		toString: function(o){var s="";if(this.re!=0){if(Math.abs(this.re)!=1){s+=Math.roundTo(this.re,o);}}if(this.im!=0){var i=Math.abs(this.im);if(this.im<0){s+='-';}else{if(this.re!=0){s+='+'}}if(i!=1){s+=Math.roundTo(i,o);}s+='i';}return s;},
 		sin: function(){return (this.mul('i').exp().sub(this.mul('-i').exp())).div('2i');},
-		asin: function(){return this.sin().inv();},
+		asin: function(){var c = this.sq().neg().add(1);var t = this.mul(0,1).add(Math.sqrt(c.mag())).mul(nC(c.angle()/2).mul('i').exp());return t.ln().div('i');},
 		cos: function(){return (this.mul('i').exp().add(this.mul('-i').exp())).div('2');},
-		acos: function(){return this.cos().inv();},
-		// wrong!
+		acos: function(){var c = this.sq().neg().add(1);var t = this.clone().add(nC('i').mul(Math.sqrt(c.mag())).mul(nC(c.angle()/2).mul('i').exp()));return t.ln().div('i');},
 		tan: function(){return this.sin().div(this.cos());},
-		atan: function(){return this.tan().inv();},
+		atan: function(){var t = this.clone().neg().add('i').div(this.clone().add('i'));return t.ln().div('2i');},
 		sinh: function(){return (this.mul('i').exp().sub(this.mul('-i').exp())).div('2');},
 		cosh: function(){return (this.mul('i').exp().add(this.mul('-i').exp())).div('2');},
 		tanh: function(){return this.sinh().div(this.cosh());},
@@ -40,7 +40,7 @@
 		conj: function(){return nC(this.re, -this.im);},
 		round: function(t){this.re = Math.roundTo(this.re, t); this.im = Math.roundTo(this.im, t); },
 		equals: function(v){return Math.abs(this.re-v.re)<Complex.eps && Math.abs(this.im-v.im)<Complex.eps;}
-	};
+	});
 	Object.assign(Complex, {
 		sub: function(v,a){var y = v.sub(a);return y;},
 		sin: function(v,a){v = nC(v,a);return v.sin();},
@@ -155,5 +155,10 @@
 		}
 		return pSolve(a);
 	};
-	global.I = global.I || {};global.I.Complex = Complex;global.I.nC = nC;
+	var arr = ('Complex nC').split(" ");
+	for (var i = arr.length - 1; i >= 0; i--) {
+		var t = eval(arr[i]);
+		if(typeof t == 'object') t.prototype.get = get;
+		Object.defineProperty(I, arr[i], {value: t, enumerable: true }); 
+	}
 })(this);
